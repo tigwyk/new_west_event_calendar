@@ -1,0 +1,16 @@
+[install]
+# Automatically install peer dependencies
+auto = true
+
+# Use exact versions for better reproducibility
+exact = true
+
+# Cache directory
+cache = "node_modules/.cache/bun"
+
+[run]
+# Use bun runtime for scripts
+bun = true
+
+# Hot reload for development
+hot = true

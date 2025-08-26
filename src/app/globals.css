@@ -1,0 +1,84 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #003149;
+  --primary: #003149;
+  --primary-light: #1a4a63;
+  --primary-dark: #001a2a;
+  --accent: #c94927;
+  --accent-light: #d66b4a;
+  --accent-dark: #a03820;
+  --gray-50: #f8fafc;
+  --gray-100: #f1f5f9;
+  --gray-200: #e2e8f0;
+  --gray-300: #cbd5e1;
+  --gray-400: #94a3b8;
+  --gray-500: #64748b;
+  --gray-600: #475569;
+  --gray-700: #334155;
+  --gray-800: #1e293b;
+  --gray-900: #0f172a;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-light: var(--primary-light);
+  --color-primary-dark: var(--primary-dark);
+  --color-accent: var(--accent);
+  --color-accent-light: var(--accent-light);
+  --color-accent-dark: var(--accent-dark);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0f172a;
+    --foreground: #f1f5f9;
+    --primary: #1a4a63;
+    --primary-light: #2563eb;
+    --primary-dark: #001a2a;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+}
+
+/* New Westminster themed components */
+.nw-primary {
+  background-color: var(--primary);
+  color: white;
+}
+
+.nw-primary-light {
+  background-color: var(--primary-light);
+  color: white;
+}
+
+.nw-accent {
+  background-color: var(--accent);
+  color: white;
+}
+
+.nw-accent-light {
+  background-color: var(--accent-light);
+  color: white;
+}
+
+.nw-border {
+  border-color: var(--primary);
+}
+
+.nw-text-primary {
+  color: var(--primary);
+}
+
+.nw-text-accent {
+  color: var(--accent);
+}
