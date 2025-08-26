@@ -61,12 +61,15 @@ bun run lint:node
 │   │   ├── api/auth/[...nextauth]/  # NextAuth.js OAuth handlers
 │   │   ├── layout.tsx    # Root layout with SessionProvider
 │   │   ├── page.tsx      # Main events calendar with OAuth integration
+│   │   ├── comprehensive.test.ts   # Complete test suite (30 tests)
+│   │   ├── page.test.ts            # Basic validation tests
 │   │   └── globals.css   # Global styles
 │   ├── components/
 │   │   ├── ErrorBoundary.tsx      # React error boundary
 │   │   └── SessionProvider.tsx    # NextAuth session wrapper
 │   ├── types/
-│   │   └── next-auth.d.ts         # NextAuth TypeScript definitions
+│   │   ├── next-auth.d.ts         # NextAuth TypeScript definitions
+│   │   └── bun-test.d.ts          # Bun test runner TypeScript definitions
 │   └── utils/
 │       └── security.ts            # Security utilities and validation
 └── public/               # Static assets and PWA manifest
@@ -107,7 +110,7 @@ The main application (`src/app/page.tsx`) is a comprehensive event calendar with
 - **Performance**: Bundle optimization, tree shaking, and SWC minification enabled
 - **React 19**: Uses latest React features (ensure compatibility when making changes)
 - **Security**: Comprehensive input sanitization, rate limiting, and XSS protection
-- **TypeScript**: Full type safety with Bun types integrated (`@types/bun`)
+- **TypeScript**: Full type safety with custom Bun test type definitions
 - **Testing**: Native Bun test runner with TypeScript support
 - **Deployment**: Standalone output optimized for Vercel with Bun runtime
 - **Custom Styling**: `nw-` prefix for New Westminster civic branding
