@@ -5,12 +5,40 @@ auto = true
 # Use exact versions for better reproducibility
 exact = true
 
-# Cache directory
+# Cache directory for better performance
 cache = "node_modules/.cache/bun"
 
+# Optimize for production builds
+production = false
+
+# Registry optimization
+registry = "https://registry.npmjs.org"
+
 [run]
-# Use bun runtime for scripts
+# Use bun runtime for scripts (faster execution)
 bun = true
 
 # Hot reload for development
 hot = true
+
+# Shell for running scripts (faster than node)
+shell = "bun"
+
+[build]
+# Optimize builds for Bun
+target = "bun"
+
+# Enable tree shaking
+treeshake = true
+
+# Minify output
+minify = true
+
+[dev]
+# Development server optimizations
+port = 3000
+hot = true
+watch = true
+
+# Faster module resolution
+preferBunModules = true
