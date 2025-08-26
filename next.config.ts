@@ -7,17 +7,6 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ["next-auth", "react", "react-dom"],
   },
 
-  // Turbopack configuration (stable in Next.js 15+)
-  turbopack: {
-    rules: {
-      "*.ts": {
-        loaders: ["bun"],
-      },
-      "*.tsx": {
-        loaders: ["bun"],
-      },
-    },
-  },
 
   // Build optimizations
   compiler: {
@@ -25,19 +14,8 @@ const nextConfig: NextConfig = {
     removeConsole: process.env.NODE_ENV === "production",
   },
 
-  // Bundle analyzer for Bun optimization
-  webpack: (config, { dev, isServer }) => {
-    if (!dev && !isServer) {
-      // Optimize bundle for production with Bun
-      config.resolve.alias = {
-        ...config.resolve.alias,
-      };
-    }
-    return config;
-  },
-
-  // Output optimization for Vercel + Bun
-  output: "standalone",
+  // Output optimization for Vercel (removed standalone for compatibility)
+  // output: "standalone", // Disabled due to deployment issues
   
   // Image optimization for Bun
   images: {

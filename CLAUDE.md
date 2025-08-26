@@ -112,7 +112,7 @@ The main application (`src/app/page.tsx`) is a comprehensive event calendar with
 - **Security**: Comprehensive input sanitization, rate limiting, and XSS protection
 - **TypeScript**: Full type safety with custom Bun test type definitions
 - **Testing**: Native Bun test runner with TypeScript support
-- **Deployment**: Standalone output optimized for Vercel with Bun runtime
+- **Deployment**: Optimized for Vercel with compatibility fixes for Next.js 15+
 - **Custom Styling**: `nw-` prefix for New Westminster civic branding
 - **Responsive Design**: Mobile-first approach with dark mode support
 - **Error Handling**: ErrorBoundary component with comprehensive error tracking
@@ -182,6 +182,19 @@ bun test src/app/comprehensive.test.ts
 - Automatic test discovery and execution
 - Watch mode for development
 - Coverage reporting available
+
+## Deployment Notes
+
+**Vercel Configuration:**
+- Uses Node.js runtime (specified in `.nvmrc`)
+- NextAuth.js API routes configured with 30s timeout
+- Telemetry disabled for performance
+- Simplified Next.js config for compatibility with deployment environments
+
+**Key Compatibility Fixes:**
+- Removed `output: "standalone"` to prevent deployment issues
+- Disabled problematic Next.js 15+ experimental features for production
+- Added proper environment variable handling for OAuth providers
 
 ## Brand Guidelines
 
