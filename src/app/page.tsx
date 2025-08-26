@@ -11,6 +11,7 @@ interface Event {
   time: string; // HH:MM (24h)
   location: string;
   description: string;
+  link?: string;
   category?: string;
   isFree?: boolean;
   isAccessible?: boolean;
@@ -46,11 +47,11 @@ export default function Home() {
   const [showAdd, setShowAdd] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
   const [form, setForm] = useState({
-    title: '', date: '', time: '', location: '', description: '', category: '', isFree: false, isAccessible: false
+    title: '', date: '', time: '', location: '', description: '', link: '', category: '', isFree: false, isAccessible: false
   });
   const [editingId, setEditingId] = useState<string|null>(null);
   const [editForm, setEditForm] = useState({
-    title: '', date: '', time: '', location: '', description: '', category: '', isFree: false, isAccessible: false
+    title: '', date: '', time: '', location: '', description: '', link: '', category: '', isFree: false, isAccessible: false
   });
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
@@ -198,7 +199,7 @@ export default function Home() {
       // Simulate async operation
       setTimeout(() => {
         setEvents([...events, newEvent]);
-        setForm({ title: '', date: '', time: '', location: '', description: '', category: '', isFree: false, isAccessible: false });
+        setForm({ title: '', date: '', time: '', location: '', description: '', link: '', category: '', isFree: false, isAccessible: false });
         setShowAdd(false);
         setIsSubmitting(false);
       }, 500);
@@ -217,6 +218,7 @@ export default function Home() {
       time: event.time,
       location: event.location,
       description: event.description,
+      link: event.link || '',
       category: event.category || '',
       isFree: event.isFree || false,
       isAccessible: event.isAccessible || false,
@@ -605,6 +607,9 @@ export default function Home() {
             </div>
             <div className="flex flex-col gap-2 sm:flex-row sm:gap-4">
               <input name="location" className="border rounded px-2 py-1 flex-1" placeholder="Location" value={form.location} onChange={handleAddChange} />
+              <input name="link" className="border rounded px-2 py-1 flex-1" placeholder="Event URL (optional)" value={form.link} onChange={handleAddChange} />
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:gap-4">
               <select name="category" className="border rounded px-2 py-1" value={form.category} onChange={handleAddChange}>
                 <option value="">Select Category</option>
                 <option value="Community">Community</option>
@@ -682,6 +687,9 @@ export default function Home() {
                       </div>
                       <div className="flex flex-col gap-2 sm:flex-row sm:gap-4">
                         <input name="location" className="border rounded px-2 py-1 flex-1" placeholder="Location" value={editForm.location} onChange={handleEditChange} />
+                        <input name="link" className="border rounded px-2 py-1 flex-1" placeholder="Event URL (optional)" value={editForm.link} onChange={handleEditChange} />
+                      </div>
+                      <div className="flex flex-col gap-2 sm:flex-row sm:gap-4">
                         <select name="category" className="border rounded px-2 py-1" value={editForm.category} onChange={handleEditChange}>
                           <option value="">Select Category</option>
                           <option value="Community">Community</option>
@@ -717,6 +725,21 @@ export default function Home() {
                           {event.status === 'pending' && <span className="ml-2 px-1 bg-yellow-200 dark:bg-yellow-700 rounded text-xs">Pending</span>}
                         </span>
                         <span className="block text-sm text-gray-700 dark:text-gray-300">{event.description}</span>
+                        {event.link && (
+                          <div className="mt-1">
+                            <a 
+                              href={event.link} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                            >
+                              🔗 Event Website
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                              </svg>
+                            </a>
+                          </div>
+                        )}
                         <div className="flex gap-2 mt-1">
                           {event.isFree && <span className="text-xs bg-green-100 dark:bg-green-800 px-2 py-0.5 rounded">Free</span>}
                           {event.isAccessible && <span className="text-xs bg-purple-100 dark:bg-purple-800 px-2 py-0.5 rounded">♿ Accessible</span>}
@@ -767,7 +790,7 @@ export default function Home() {
                                   className="flex-1 border rounded px-2 py-1 text-sm"
                                   value={commentText}
                                   onChange={(e) => setCommentText(e.target.value)}
-                                  onKeyPress={(e) => e.key === 'Enter' && addComment(event.id)}
+                                  onKeyDown={(e) => e.key === 'Enter' && addComment(event.id)}
                                 />
                                 <button
                                   className="text-xs px-2 py-1 bg-blue-500 text-white rounded"
@@ -781,8 +804,12 @@ export default function Home() {
                         )}
                       </div>
                       <span className="flex gap-2">
-                        <button className="text-xs px-2 py-1 bg-blue-500 text-white rounded" onClick={() => startEdit(event)}>Edit</button>
-                        <button className="text-xs px-2 py-1 bg-red-500 text-white rounded" onClick={() => handleDelete(event.id)}>Delete</button>
+                        {(currentUser?.isAdmin || event.submittedBy === currentUser?.id) && (
+                          <>
+                            <button className="text-xs px-2 py-1 bg-blue-500 text-white rounded" onClick={() => startEdit(event)}>Edit</button>
+                            <button className="text-xs px-2 py-1 bg-red-500 text-white rounded" onClick={() => handleDelete(event.id)}>Delete</button>
+                          </>
+                        )}
                         {currentUser?.isAdmin && event.status === 'pending' && (
                           <>
                             <button className="text-xs px-2 py-1 bg-green-500 text-white rounded" onClick={() => approveEvent(event.id)}>Approve</button>
