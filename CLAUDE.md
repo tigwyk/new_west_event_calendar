@@ -107,6 +107,8 @@ The main application (`src/app/page.tsx`) is a comprehensive event calendar with
 - **Performance**: Bundle optimization, tree shaking, and SWC minification enabled
 - **React 19**: Uses latest React features (ensure compatibility when making changes)
 - **Security**: Comprehensive input sanitization, rate limiting, and XSS protection
+- **TypeScript**: Full type safety with Bun types integrated (`@types/bun`)
+- **Testing**: Native Bun test runner with TypeScript support
 - **Deployment**: Standalone output optimized for Vercel with Bun runtime
 - **Custom Styling**: `nw-` prefix for New Westminster civic branding
 - **Responsive Design**: Mobile-first approach with dark mode support
@@ -172,10 +174,11 @@ bun test src/app/comprehensive.test.ts
 - `src/app/page.test.ts` - Basic validation and security tests
 
 **Key Features:**
-- No additional test dependencies needed (uses `bun:test`)
+- **Native Bun integration** with proper TypeScript support
 - Built-in assertions with `expect()`
-- Automatic test discovery
+- Automatic test discovery and execution
 - Watch mode for development
+- Coverage reporting available
 
 ## Brand Guidelines
 

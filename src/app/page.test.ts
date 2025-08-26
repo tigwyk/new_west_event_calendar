@@ -12,8 +12,8 @@ describe('Event Validation', () => {
     if (!formData.title?.trim()) errors.push('Title is required');
     if (!formData.date) errors.push('Date is required');
     if (!formData.time) errors.push('Time is required');
-    if (formData.title?.length > 100) errors.push('Title must be less than 100 characters');
-    if (formData.description?.length > 1000) errors.push('Description must be less than 1000 characters');
+    if (formData.title && formData.title.length > 100) errors.push('Title must be less than 100 characters');
+    if (formData.description && formData.description.length > 1000) errors.push('Description must be less than 1000 characters');
     return errors;
   };
 

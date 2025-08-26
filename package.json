@@ -18,8 +18,7 @@
     "test:coverage": "bun test --coverage",
     "type-check": "bun --bun tsc --noEmit",
     "build:analyze": "bun run build && bun run start",
-    "prebuild": "bun run type-check",
-    "postinstall": "bun run type-check"
+    "prebuild": "bun run type-check"
   },
   "dependencies": {
     "next": "15.4.6",
