@@ -10,5 +10,6 @@
   "env": {
     "NEXT_TELEMETRY_DISABLED": "1",
     "SKIP_ENV_VALIDATION": "1"
-  }
+  },
+  "domains": ["www.newwestevents.com", "newwestevents.com"]
 }

@@ -56,6 +56,7 @@ bun run lint:node
 ├── next.config.ts         # Next.js config (Turbopack + Bun optimizations)
 ├── package.json           # Bun-first scripts (Node.js fallbacks available)
 ├── .env.example          # OAuth environment variables template
+├── OAUTH_SETUP.md        # Complete OAuth provider setup guide
 ├── src/
 │   ├── app/              # Next.js App Router
 │   │   ├── api/auth/[...nextauth]/  # NextAuth.js OAuth handlers
@@ -185,11 +186,12 @@ bun test src/app/comprehensive.test.ts
 
 ## Deployment Notes
 
-**Vercel Configuration:**
-- Uses Node.js runtime (specified in `.nvmrc`)
-- NextAuth.js API routes configured with 30s timeout
-- Telemetry disabled for performance
-- Simplified Next.js config for compatibility with deployment environments
+**Production Deployment:**
+- **Domain**: https://www.newwestevents.com
+- **Platform**: Vercel with Node.js runtime (`.nvmrc`)
+- **OAuth**: NextAuth.js API routes configured with 30s timeout
+- **Performance**: Telemetry disabled, optimized Next.js config
+- **DNS**: Custom domain configured with SSL
 
 **Key Compatibility Fixes:**
 - **SWC Resolution**: Added optional Linux SWC binaries for deployment platforms

@@ -2,6 +2,8 @@
 
 A comprehensive events calendar application for New Westminster, built with Next.js, React 19, and TypeScript.
 
+**Live Site**: https://www.newwestevents.com
+
 ## Local Development
 
     npm install
