@@ -1,7 +1,9 @@
 /**
  * Comprehensive test suite for New West Event Calendar
- * Run with: bun test (after installing @types/jest and jest)
+ * Run with: bun test (uses Bun's native test runner - no additional dependencies needed)
  */
+
+import { describe, test, expect } from "bun:test";
 
 // Event Management Tests
 describe('Event Management', () => {
@@ -189,7 +191,7 @@ describe('User Authentication', () => {
     const validateLogin = (email: string, password: string) => {
       // Mock validation - in real app this would check against database
       const user = mockUsers.find(u => u.email === email);
-      return user && password.length >= 6; // Simple validation
+      return !!(user && password.length >= 6); // Simple validation
     };
 
     expect(validateLogin('admin@newwest.ca', 'password123')).toBe(true);

@@ -1,7 +1,9 @@
 /**
  * Basic test setup for New West Event Calendar
- * Run with: bun test (after installing test dependencies)
+ * Run with: bun test (uses Bun's native test runner)
  */
+
+import { describe, test, expect } from "bun:test";
 
 // Mock test for event validation
 describe('Event Validation', () => {
