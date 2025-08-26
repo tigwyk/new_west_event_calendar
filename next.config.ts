@@ -14,6 +14,9 @@ const nextConfig: NextConfig = {
     removeConsole: process.env.NODE_ENV === "production",
   },
 
+  // SWC minification (can be disabled if problematic)
+  swcMinify: true,
+
   // Output optimization for Vercel (removed standalone for compatibility)
   // output: "standalone", // Disabled due to deployment issues
   

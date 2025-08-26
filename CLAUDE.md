@@ -192,9 +192,14 @@ bun test src/app/comprehensive.test.ts
 - Simplified Next.js config for compatibility with deployment environments
 
 **Key Compatibility Fixes:**
-- Removed `output: "standalone"` to prevent deployment issues
-- Disabled problematic Next.js 15+ experimental features for production
-- Added proper environment variable handling for OAuth providers
+- **SWC Resolution**: Added optional Linux SWC binaries for deployment platforms
+- **NPM Configuration**: `.npmrc` with `legacy-peer-deps` for compatibility
+- **Node.js Commands**: Uses `build:node` and `start:node` for deployment
+- **Package Engines**: Specified Node.js >=18.17.0 requirement
+- **Environment Variables**: Added `SKIP_ENV_VALIDATION` and disabled telemetry
+
+**Troubleshooting Deployment:**
+If SWC 404 errors persist, the `swcMinify: true` option in `next.config.ts` can be set to `false` to use Terser instead of SWC for minification.
 
 ## Brand Guidelines
 

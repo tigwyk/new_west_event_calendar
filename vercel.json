@@ -1,6 +1,6 @@
 {
-  "buildCommand": "npm run build",
-  "installCommand": "npm install",
+  "buildCommand": "npm run build:node",
+  "installCommand": "npm install --legacy-peer-deps",
   "framework": "nextjs",
   "functions": {
     "src/app/api/auth/[...nextauth]/route.ts": {
@@ -8,6 +8,7 @@
     }
   },
   "env": {
-    "NEXT_TELEMETRY_DISABLED": "1"
+    "NEXT_TELEMETRY_DISABLED": "1",
+    "SKIP_ENV_VALIDATION": "1"
   }
 }
