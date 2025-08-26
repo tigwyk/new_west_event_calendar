@@ -3,29 +3,36 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
-    "dev:bun": "bun --bun next dev",
-    "build:bun": "bun --bun next build",
-    "start:bun": "bun --bun next start",
-    "lint:bun": "bun --bun next lint"
+    "dev": "bun --bun next dev",
+    "build": "bun --bun next build",
+    "start": "bun --bun next start",
+    "lint": "bun --bun next lint",
+    "dev:node": "next dev",
+    "build:node": "next build",
+    "start:node": "next start",
+    "lint:node": "next lint",
+    "clean": "bun run rm -rf .next node_modules/.cache",
+    "install:clean": "bun run clean && bun install",
+    "type-check": "bun --bun tsc --noEmit",
+    "build:analyze": "bun run build && bun run start",
+    "prebuild": "bun run type-check",
+    "postinstall": "bun run type-check"
   },
   "dependencies": {
+    "next": "15.4.6",
+    "next-auth": "^4.24.11",
     "react": "19.1.0",
-    "react-dom": "19.1.0",
-    "next": "15.4.6"
+    "react-dom": "19.1.0"
   },
   "devDependencies": {
-    "typescript": "^5",
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@tailwindcss/postcss": "^4",
-    "tailwindcss": "^4",
     "eslint": "^9",
     "eslint-config-next": "15.4.6",
-    "@eslint/eslintrc": "^3"
+    "tailwindcss": "^4",
+    "typescript": "^5"
   }
 }
