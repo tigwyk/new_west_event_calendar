@@ -1,12 +1,37 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Optimize for Bun runtime
+  // Turbopack configuration (now stable)
+  turbopack: {
+    rules: {
+      // Optimize CSS handling
+      "*.css": ["css-loader", "postcss-loader"],
+      // Optimize TypeScript compilation
+      "*.ts": {
+        loaders: ["swc-loader"],
+        as: "*.js",
+      },
+      "*.tsx": {
+        loaders: ["swc-loader"],
+        as: "*.js",
+      },
+    },
+    resolveAlias: {
+      // Optimize common imports for Turbopack
+      "@": "./src",
+      "@components": "./src/components",
+      "@utils": "./src/utils",
+      "@types": "./src/types",
+    },
+  },
+
+  // Experimental features
   experimental: {
-    // Optimize bundling for Bun
+    // Optimize package imports for both Turbopack and Bun
     optimizePackageImports: ["next-auth", "react", "react-dom"],
   },
 
+  // Server external packages (removed due to Turbopack conflict)
 
   // Build optimizations
   compiler: {
@@ -14,18 +39,12 @@ const nextConfig: NextConfig = {
     removeConsole: process.env.NODE_ENV === "production",
   },
 
-  // SWC minification (can be disabled if problematic)
-  swcMinify: true,
-
-  // Output optimization for Vercel (removed standalone for compatibility)
-  // output: "standalone", // Disabled due to deployment issues
-  
-  // Image optimization for Bun
+  // Image optimization 
   images: {
     formats: ["image/webp", "image/avif"],
   },
 
-  // Headers for better caching with Bun
+  // Security headers
   async headers() {
     return [
       {
