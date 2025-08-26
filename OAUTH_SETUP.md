@@ -13,6 +13,7 @@ Complete guide for configuring OAuth applications with real providers for newwes
 All providers need these callback URLs configured:
 
 - **Development**: `http://localhost:3000/api/auth/callback/[provider]`
+- **Preview**: `https://test.newwestevents.com/api/auth/callback/[provider]`
 - **Production**: `https://www.newwestevents.com/api/auth/callback/[provider]`
 
 Replace `[provider]` with: `google`, `github`, `facebook`, or `twitter`
