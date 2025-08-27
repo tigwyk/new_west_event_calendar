@@ -1,18 +1,60 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useSession } from 'next-auth/react'
-import { eventService, commentService, rsvpService, userService, subscriptions } from '../lib/database'
-import { EventRow, CommentRow, RSVPRow } from '../lib/supabase'
 
-// Enhanced event type with related data
-export interface EventWithDetails extends EventRow {
-  rsvps?: RSVPRow[]
-  comments?: CommentRow[]
+// Conditionally import database services based on environment
+let eventService: any, commentService: any, rsvpService: any, userService: any, subscriptions: any
+let EventRow: any, CommentRow: any, RSVPRow: any
+
+try {
+  // Try to import full Supabase implementation
+  const dbModule = require('../lib/database')
+  const supabaseModule = require('../lib/supabase')
+  eventService = dbModule.eventService
+  commentService = dbModule.commentService
+  rsvpService = dbModule.rsvpService
+  userService = dbModule.userService
+  subscriptions = dbModule.subscriptions
+  EventRow = supabaseModule.EventRow
+  CommentRow = supabaseModule.CommentRow
+  RSVPRow = supabaseModule.RSVPRow
+} catch {
+  // Fallback to simple implementation for build compatibility
+  const simpleModule = require('../lib/database-simple')
+  eventService = simpleModule.eventService
+  commentService = simpleModule.commentService
+  rsvpService = simpleModule.rsvpService
+  userService = simpleModule.userService
+  subscriptions = simpleModule.subscriptions
+  
+  // Define simple types
+  EventRow = { id: '', title: '', date: '', time: '', location: '', description: '', status: 'pending' as const, created_at: '', updated_at: '' }
+  CommentRow = { id: '', event_id: '', user_id: '', user_name: '', text: '', created_at: '', updated_at: '' }
+  RSVPRow = { id: '', event_id: '', user_id: '', user_email: '', status: 'attending' as const, created_at: '', updated_at: '' }
+}
+
+// Enhanced event type with related data  
+export interface EventWithDetails {
+  id: string
+  title: string
+  date: string
+  time: string
+  location: string
+  description: string
+  category?: string | null
+  is_free?: boolean
+  is_accessible?: boolean
+  submitted_by?: string | null
+  status: 'approved' | 'pending' | 'rejected'
+  created_at: string
+  updated_at: string
+  rsvps?: any[]
+  comments?: any[]
   rsvp_counts?: {
     attending: number
     not_attending: number
     maybe: number
   }
-  user_rsvp?: RSVPRow | null
+  user_rsvp?: any | null
 }
 
 export const useEvents = () => {
@@ -204,18 +246,20 @@ export const useEvents = () => {
       text
     })
 
-    // Update the event in state with new comment
-    setEvents(prevEvents =>
-      prevEvents.map(event => {
-        if (event.id === eventId) {
-          return {
-            ...event,
-            comments: [...(event.comments || []), newComment]
+    // Update the event in state with new comment (only if comment creation succeeded)
+    if (newComment) {
+      setEvents(prevEvents =>
+        prevEvents.map(event => {
+          if (event.id === eventId) {
+            return {
+              ...event,
+              comments: [...(event.comments || []), newComment]
+            }
           }
-        }
-        return event
-      })
-    )
+          return event
+        })
+      )
+    }
 
     return newComment
   }, [currentUser])
@@ -226,13 +270,17 @@ export const useEvents = () => {
     const eventSubscription = subscriptions.subscribeToEvents((payload) => {
       console.log('Event change received:', payload)
       
-      if (payload.eventType === 'UPDATE' && payload.new.status === 'approved') {
-        // Event was approved, refresh approved events
-        loadEvents()
-      } else if (payload.eventType === 'INSERT') {
-        // New event added, refresh pending events if admin
-        if (currentUser?.isAdmin) {
-          loadPendingEvents()
+      // Type guard for payload structure
+      if (typeof payload === 'object' && payload && 'eventType' in payload && 'new' in payload) {
+        const typedPayload = payload as { eventType: string; new: { status?: string } }
+        if (typedPayload.eventType === 'UPDATE' && typedPayload.new.status === 'approved') {
+          // Event was approved, refresh approved events
+          loadEvents()
+        } else if (typedPayload.eventType === 'INSERT') {
+          // New event added, refresh pending events if admin
+          if (currentUser?.isAdmin) {
+            loadPendingEvents()
+          }
         }
       }
     })
