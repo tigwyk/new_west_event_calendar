@@ -1,8 +1,9 @@
 "use client";
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import React from "react";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { validateEventData, sanitizeInput, RateLimiter } from "../utils/security";
+import { useEvents } from "../hooks/useEvents";
 
 interface Event {
   id: string;
@@ -40,10 +41,54 @@ export default function Home() {
     isAdmin: session.user.email?.endsWith('@newwestminster.ca') || false
   } : null;
   
+  // Database integration with fallback to in-memory
+  const {
+    events: dbEvents,
+    pendingEvents: dbPendingEvents,
+    createEvent: dbCreateEvent,
+    updateEventStatus: dbUpdateEventStatus
+  } = useEvents();
+
   // Rate limiter for form submissions
   const rateLimiter = useMemo(() => new RateLimiter(5, 60000), []); // 5 attempts per minute
   
+  // Hybrid event state - use database events if available, otherwise local state
+  const [localEvents, setLocalEvents] = useState<Event[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
+  
+  // Sync database events with local state
+  useEffect(() => {
+    if (dbEvents.length > 0) {
+      // Convert database events to local format
+      const convertedEvents: Event[] = dbEvents.map(dbEvent => ({
+        id: dbEvent.id,
+        title: dbEvent.title,
+        date: dbEvent.date,
+        time: dbEvent.time,
+        location: dbEvent.location,
+        description: dbEvent.description,
+        link: dbEvent.link,
+        category: dbEvent.category || undefined,
+        isFree: dbEvent.is_free,
+        isAccessible: dbEvent.is_accessible,
+        submittedBy: dbEvent.submitted_by || undefined,
+        status: dbEvent.status,
+        rsvps: [], // Will be populated from RSVP data
+        comments: (dbEvent.comments || []).map(comment => ({
+          id: comment.id,
+          eventId: comment.event_id,
+          userId: comment.user_id,
+          userName: comment.user_name,
+          text: comment.text,
+          timestamp: comment.created_at
+        }))
+      }));
+      setEvents(convertedEvents);
+    } else {
+      // Use local events when database is not available
+      setEvents(localEvents);
+    }
+  }, [dbEvents, localEvents]);
   const [showAdd, setShowAdd] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
   const [form, setForm] = useState({
@@ -157,7 +202,7 @@ export default function Home() {
       setForm({ ...form, [name]: value });
     }
   }
-  function handleAddSubmit(e: React.FormEvent) {
+  async function handleAddSubmit(e: React.FormEvent) {
     e.preventDefault();
     
     if (isSubmitting) return; // Prevent double submission
@@ -187,6 +232,31 @@ export default function Home() {
         location: sanitizeInput(form.location)
       };
       
+      // Try to create event in database first
+      if (dbCreateEvent) {
+        try {
+          await dbCreateEvent({
+            title: sanitizedForm.title,
+            date: sanitizedForm.date,
+            time: sanitizedForm.time,
+            location: sanitizedForm.location,
+            description: sanitizedForm.description,
+            category: sanitizedForm.category,
+            isFree: sanitizedForm.isFree,
+            isAccessible: sanitizedForm.isAccessible
+          });
+          
+          // Database creation successful
+          setForm({ title: '', date: '', time: '', location: '', description: '', link: '', category: '', isFree: false, isAccessible: false });
+          setShowAdd(false);
+          setIsSubmitting(false);
+          return;
+        } catch (dbError) {
+          console.warn('Database event creation failed, falling back to local storage:', dbError);
+        }
+      }
+      
+      // Fallback to local event creation
       const newEvent: Event = {
         ...sanitizedForm,
         id: Date.now().toString(),
@@ -196,13 +266,11 @@ export default function Home() {
         comments: []
       };
       
-      // Simulate async operation
-      setTimeout(() => {
-        setEvents([...events, newEvent]);
-        setForm({ title: '', date: '', time: '', location: '', description: '', link: '', category: '', isFree: false, isAccessible: false });
-        setShowAdd(false);
-        setIsSubmitting(false);
-      }, 500);
+      // Update local events
+      setLocalEvents(prev => [...prev, newEvent]);
+      setForm({ title: '', date: '', time: '', location: '', description: '', link: '', category: '', isFree: false, isAccessible: false });
+      setShowAdd(false);
+      setIsSubmitting(false);
       
     } catch (error) {
       console.error('Error creating event:', error);
@@ -300,16 +368,46 @@ export default function Home() {
   }
 
   // Admin functions
-  function approveEvent(eventId: string) {
+  async function approveEvent(eventId: string) {
     if (!currentUser?.isAdmin) return;
+    
+    // Try database first
+    if (dbUpdateEventStatus) {
+      try {
+        await dbUpdateEventStatus(eventId, 'approved');
+        return; // Database update successful
+      } catch (error) {
+        console.warn('Database approval failed, updating locally:', error);
+      }
+    }
+    
+    // Fallback to local update
     setEvents(events.map(event => 
+      event.id === eventId ? { ...event, status: 'approved' } : event
+    ));
+    setLocalEvents(prev => prev.map(event => 
       event.id === eventId ? { ...event, status: 'approved' } : event
     ));
   }
 
-  function rejectEvent(eventId: string) {
+  async function rejectEvent(eventId: string) {
     if (!currentUser?.isAdmin) return;
+    
+    // Try database first
+    if (dbUpdateEventStatus) {
+      try {
+        await dbUpdateEventStatus(eventId, 'rejected');
+        return; // Database update successful
+      } catch (error) {
+        console.warn('Database rejection failed, updating locally:', error);
+      }
+    }
+    
+    // Fallback to local update
     setEvents(events.map(event => 
+      event.id === eventId ? { ...event, status: 'rejected' } : event
+    ));
+    setLocalEvents(prev => prev.map(event => 
       event.id === eventId ? { ...event, status: 'rejected' } : event
     ));
   }
@@ -396,10 +494,35 @@ export default function Home() {
     [approvedEvents]
   );
 
-  const pendingEvents = useMemo(() => 
-    events.filter(event => event.status === 'pending'),
-    [events]
-  );
+  const pendingEvents = useMemo(() => {
+    // Use database pending events if available, otherwise filter local events
+    if (dbPendingEvents.length > 0) {
+      return dbPendingEvents.map(dbEvent => ({
+        id: dbEvent.id,
+        title: dbEvent.title,
+        date: dbEvent.date,
+        time: dbEvent.time,
+        location: dbEvent.location,
+        description: dbEvent.description,
+        link: dbEvent.link,
+        category: dbEvent.category || undefined,
+        isFree: dbEvent.is_free,
+        isAccessible: dbEvent.is_accessible,
+        submittedBy: dbEvent.submitted_by || undefined,
+        status: dbEvent.status as 'pending',
+        rsvps: [],
+        comments: (dbEvent.comments || []).map(comment => ({
+          id: comment.id,
+          eventId: comment.event_id,
+          userId: comment.user_id,
+          userName: comment.user_name,
+          text: comment.text,
+          timestamp: comment.created_at
+        }))
+      }));
+    }
+    return events.filter(event => event.status === 'pending');
+  }, [dbPendingEvents, events]);
   
   const categories = useMemo(() => 
     Array.from(new Set(allEvents.map(e => e.category).filter(Boolean))),
