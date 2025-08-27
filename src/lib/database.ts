@@ -1,0 +1,418 @@
+import { createClientComponentClient, EventRow, EventInsert, EventUpdate, CommentRow, CommentInsert, RSVPRow, RSVPInsert, UserRow } from './supabase'
+import { validateEventData, sanitizeInput } from '../utils/security'
+
+const supabase = createClientComponentClient()
+
+// Event-related database operations
+export const eventService = {
+  // Get all approved events for public display
+  async getApprovedEvents(): Promise<EventRow[]> {
+    const { data, error } = await supabase
+      .from('events')
+      .select(`
+        *,
+        users:submitted_by(name, email),
+        rsvps(id, status),
+        comments(id, user_name, text, created_at)
+      `)
+      .eq('status', 'approved')
+      .order('date', { ascending: true })
+
+    if (error) {
+      console.error('Error fetching events:', error)
+      return []
+    }
+
+    return data || []
+  },
+
+  // Get events pending approval (admin only)
+  async getPendingEvents(): Promise<EventRow[]> {
+    const { data, error } = await supabase
+      .from('events')
+      .select(`
+        *,
+        users:submitted_by(name, email),
+        rsvps(id, status),
+        comments(id, user_name, text, created_at)
+      `)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('Error fetching pending events:', error)
+      return []
+    }
+
+    return data || []
+  },
+
+  // Get user's submitted events
+  async getUserEvents(userId: string): Promise<EventRow[]> {
+    const { data, error } = await supabase
+      .from('events')
+      .select(`
+        *,
+        rsvps(id, status),
+        comments(id, user_name, text, created_at)
+      `)
+      .eq('submitted_by', userId)
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('Error fetching user events:', error)
+      return []
+    }
+
+    return data || []
+  },
+
+  // Create a new event
+  async createEvent(eventData: Omit<EventInsert, 'id' | 'created_at' | 'updated_at'>): Promise<EventRow | null> {
+    // Validate and sanitize input
+    const validationResult = validateEventData({
+      title: eventData.title,
+      date: eventData.date,
+      time: eventData.time,
+      location: eventData.location,
+      description: eventData.description,
+      category: eventData.category || '',
+      isFree: eventData.is_free || false,
+      isAccessible: eventData.is_accessible || false
+    })
+
+    if (!validationResult.isValid) {
+      throw new Error(validationResult.errors.join(', '))
+    }
+
+    const sanitizedData: EventInsert = {
+      title: sanitizeInput(eventData.title),
+      date: eventData.date,
+      time: eventData.time,
+      location: sanitizeInput(eventData.location),
+      description: sanitizeInput(eventData.description),
+      category: eventData.category ? sanitizeInput(eventData.category) : null,
+      is_free: eventData.is_free || false,
+      is_accessible: eventData.is_accessible || false,
+      submitted_by: eventData.submitted_by,
+      status: 'pending' // All new events start as pending
+    }
+
+    const { data, error } = await supabase
+      .from('events')
+      .insert([sanitizedData])
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error creating event:', error)
+      throw new Error('Failed to create event')
+    }
+
+    return data
+  },
+
+  // Update an existing event
+  async updateEvent(eventId: string, updates: EventUpdate): Promise<EventRow | null> {
+    if (updates.title) updates.title = sanitizeInput(updates.title)
+    if (updates.location) updates.location = sanitizeInput(updates.location)
+    if (updates.description) updates.description = sanitizeInput(updates.description)
+    if (updates.category) updates.category = sanitizeInput(updates.category)
+
+    const { data, error } = await supabase
+      .from('events')
+      .update(updates)
+      .eq('id', eventId)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error updating event:', error)
+      throw new Error('Failed to update event')
+    }
+
+    return data
+  },
+
+  // Delete an event (admin only)
+  async deleteEvent(eventId: string): Promise<boolean> {
+    const { error } = await supabase
+      .from('events')
+      .delete()
+      .eq('id', eventId)
+
+    if (error) {
+      console.error('Error deleting event:', error)
+      return false
+    }
+
+    return true
+  },
+
+  // Approve/reject an event (admin only)
+  async updateEventStatus(eventId: string, status: 'approved' | 'rejected'): Promise<EventRow | null> {
+    return this.updateEvent(eventId, { status })
+  }
+}
+
+// Comment-related database operations
+export const commentService = {
+  // Get comments for an event
+  async getEventComments(eventId: string): Promise<CommentRow[]> {
+    const { data, error } = await supabase
+      .from('comments')
+      .select('*')
+      .eq('event_id', eventId)
+      .order('created_at', { ascending: true })
+
+    if (error) {
+      console.error('Error fetching comments:', error)
+      return []
+    }
+
+    return data || []
+  },
+
+  // Add a comment to an event
+  async createComment(commentData: Omit<CommentInsert, 'id' | 'created_at' | 'updated_at'>): Promise<CommentRow | null> {
+    const sanitizedData: CommentInsert = {
+      ...commentData,
+      text: sanitizeInput(commentData.text),
+      user_name: sanitizeInput(commentData.user_name)
+    }
+
+    const { data, error } = await supabase
+      .from('comments')
+      .insert([sanitizedData])
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error creating comment:', error)
+      throw new Error('Failed to create comment')
+    }
+
+    return data
+  },
+
+  // Update a comment
+  async updateComment(commentId: string, text: string): Promise<CommentRow | null> {
+    const { data, error } = await supabase
+      .from('comments')
+      .update({ text: sanitizeInput(text) })
+      .eq('id', commentId)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error updating comment:', error)
+      throw new Error('Failed to update comment')
+    }
+
+    return data
+  },
+
+  // Delete a comment
+  async deleteComment(commentId: string): Promise<boolean> {
+    const { error } = await supabase
+      .from('comments')
+      .delete()
+      .eq('id', commentId)
+
+    if (error) {
+      console.error('Error deleting comment:', error)
+      return false
+    }
+
+    return true
+  }
+}
+
+// RSVP-related database operations
+export const rsvpService = {
+  // Get RSVPs for an event
+  async getEventRSVPs(eventId: string): Promise<RSVPRow[]> {
+    const { data, error } = await supabase
+      .from('rsvps')
+      .select('*')
+      .eq('event_id', eventId)
+
+    if (error) {
+      console.error('Error fetching RSVPs:', error)
+      return []
+    }
+
+    return data || []
+  },
+
+  // Get RSVP counts for an event
+  async getEventRSVPCounts(eventId: string): Promise<{ attending: number; not_attending: number; maybe: number }> {
+    const { data, error } = await supabase
+      .from('rsvps')
+      .select('status')
+      .eq('event_id', eventId)
+
+    if (error) {
+      console.error('Error fetching RSVP counts:', error)
+      return { attending: 0, not_attending: 0, maybe: 0 }
+    }
+
+    const counts = { attending: 0, not_attending: 0, maybe: 0 }
+    data?.forEach(rsvp => {
+      counts[rsvp.status as keyof typeof counts]++
+    })
+
+    return counts
+  },
+
+  // Update user's RSVP status
+  async updateRSVP(eventId: string, userId: string, userEmail: string, status: 'attending' | 'not_attending' | 'maybe'): Promise<RSVPRow | null> {
+    const rsvpData: RSVPInsert = {
+      event_id: eventId,
+      user_id: userId,
+      user_email: userEmail,
+      status
+    }
+
+    const { data, error } = await supabase
+      .from('rsvps')
+      .upsert([rsvpData])
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error updating RSVP:', error)
+      throw new Error('Failed to update RSVP')
+    }
+
+    return data
+  },
+
+  // Get user's RSVP for an event
+  async getUserRSVP(eventId: string, userId: string): Promise<RSVPRow | null> {
+    const { data, error } = await supabase
+      .from('rsvps')
+      .select('*')
+      .eq('event_id', eventId)
+      .eq('user_id', userId)
+      .single()
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        // No RSVP found
+        return null
+      }
+      console.error('Error fetching user RSVP:', error)
+      return null
+    }
+
+    return data
+  }
+}
+
+// User-related database operations
+export const userService = {
+  // Get or create user profile
+  async getOrCreateUser(email: string, name?: string, image?: string): Promise<UserRow | null> {
+    // First try to get existing user
+    const { data: existingUser } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email)
+      .single()
+
+    if (existingUser) {
+      return existingUser
+    }
+
+    // If user doesn't exist and we have required data, create them
+    if (name) {
+      const { data, error } = await supabase
+        .from('users')
+        .insert([{
+          email,
+          name: sanitizeInput(name),
+          image,
+          is_admin: email.endsWith('@newwestminster.ca')
+        }])
+        .select()
+        .single()
+
+      if (error) {
+        console.error('Error creating user:', error)
+        return null
+      }
+
+      return data
+    }
+
+    return null
+  },
+
+  // Update user profile
+  async updateUser(userId: string, updates: Partial<{ name: string; image: string }>): Promise<UserRow | null> {
+    const sanitizedUpdates: Record<string, string> = {}
+    if (updates.name) sanitizedUpdates.name = sanitizeInput(updates.name)
+    if (updates.image) sanitizedUpdates.image = updates.image
+
+    const { data, error } = await supabase
+      .from('users')
+      .update(sanitizedUpdates)
+      .eq('id', userId)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error updating user:', error)
+      return null
+    }
+
+    return data
+  }
+}
+
+// Real-time subscriptions
+export const subscriptions = {
+  // Subscribe to event changes
+  subscribeToEvents(callback: (payload: unknown) => void) {
+    return supabase
+      .channel('events_changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'events' },
+        callback
+      )
+      .subscribe()
+  },
+
+  // Subscribe to comment changes for an event
+  subscribeToEventComments(eventId: string, callback: (payload: unknown) => void) {
+    return supabase
+      .channel(`comments_${eventId}`)
+      .on('postgres_changes',
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'comments',
+          filter: `event_id=eq.${eventId}`
+        },
+        callback
+      )
+      .subscribe()
+  },
+
+  // Subscribe to RSVP changes for an event
+  subscribeToEventRSVPs(eventId: string, callback: (payload: unknown) => void) {
+    return supabase
+      .channel(`rsvps_${eventId}`)
+      .on('postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'rsvps',
+          filter: `event_id=eq.${eventId}`
+        },
+        callback
+      )
+      .subscribe()
+  }
+}
