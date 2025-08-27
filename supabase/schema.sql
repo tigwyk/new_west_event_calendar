@@ -214,7 +214,7 @@ BEGIN
     NEW.email,
     NEW.raw_user_meta_data->>'name',
     NEW.raw_user_meta_data->>'picture',
-    CASE WHEN NEW.email LIKE '%@newwestminster.ca' THEN TRUE ELSE FALSE END
+    CASE WHEN NEW.email LIKE '%@newwestevents.com' THEN TRUE ELSE FALSE END
   )
   ON CONFLICT (email) DO UPDATE SET
     name = EXCLUDED.name,
