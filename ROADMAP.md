@@ -63,28 +63,32 @@ A guide for major milestones and development priorities for the interactive even
   - ✅ TypeScript with custom Bun test types
 
 ## 🔄 Phase 6: Backend & Database Integration (NEXT PRIORITY)
-- 🟡 **Database Integration**
-  - 🟡 PostgreSQL/Supabase setup
+- 🟡 **Supabase Integration**
+  - 🟡 Supabase project setup and configuration
+  - 🟡 Database schema design (events, users, comments, RSVPs)
+  - 🟡 Row Level Security (RLS) policies
   - 🟡 Event persistence and CRUD operations
-  - 🟡 User profile storage
+  - 🟡 User profile storage with NextAuth.js integration
   - 🟡 Comment and RSVP data storage
+  - 🟡 Real-time subscriptions for live updates
 - 🟡 **Enhanced Authentication**
+  - 🟡 Supabase Auth integration with existing NextAuth.js
   - 🟡 User profile management
   - 🟡 Role-based permissions (admin/moderator/user)
   - 🟡 Account linking (multiple OAuth providers)
 - 🟡 **Email & Notifications**
-  - 🟡 SMTP/SendGrid email service integration
+  - 🟡 Supabase Edge Functions for email service
   - 🟡 Event reminder notifications
   - 🟡 Admin approval notifications
   - 🟡 Digest email subscriptions
 
 ## 🔄 Phase 7: Advanced Features (FUTURE)
-- 🟡 **Real-time Features**
-  - 🟡 WebSocket integration for live updates
+- 🟡 **Real-time Features** (Built on Supabase Realtime)
+  - 🟡 Real-time event updates and notifications
   - 🟡 Real-time comment threads
-  - 🟡 Live RSVP counts
+  - 🟡 Live RSVP counts and waiting lists
 - 🟡 **Content Management**
-  - 🟡 File upload capabilities (event images)
+  - 🟡 Supabase Storage for event images and files
   - 🟡 Advanced content moderation tools
   - 🟡 Bulk event import/export
 - 🟡 **Analytics & Reporting**
@@ -104,7 +108,8 @@ A guide for major milestones and development priorities for the interactive even
 - **Framework**: Next.js 15.4.6 (App Router) 
 - **Frontend**: React 19.1.0 with TypeScript
 - **Runtime**: Bun (primary), Node.js (fallback)
-- **Authentication**: NextAuth.js v4 with 4 OAuth providers
+- **Database**: Supabase (PostgreSQL with real-time subscriptions)
+- **Authentication**: NextAuth.js v4 with 4 OAuth providers + Supabase Auth
 - **Styling**: Tailwind CSS v4
 - **Testing**: Bun native test runner (30 tests, 15ms)
 - **Deployment**: Vercel (optimized)
