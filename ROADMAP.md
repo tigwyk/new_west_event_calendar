@@ -50,7 +50,7 @@ A guide for major milestones and development priorities for the interactive even
   - ✅ GitHub OAuth integration
   - ✅ Facebook OAuth integration
   - ✅ Twitter OAuth integration
-  - ✅ Automatic admin detection (@newwestminster.ca emails)
+  - ✅ Automatic admin detection (@newwestevents.com emails)
 - ✅ **Bun Runtime Optimization**
   - ✅ Bun-first development workflow (~3x faster builds)
   - ✅ Native Bun test runner (30 tests in 15ms)
@@ -127,7 +127,7 @@ A guide for major milestones and development priorities for the interactive even
 - **Type Safety**: Full TypeScript with custom Bun test definitions
 - **Environment**: Use environment variables for all secrets/keys
 - **OAuth**: Real authentication with Google, GitHub, Facebook, Twitter
-- **Admin Access**: Automatic privileges for @newwestminster.ca emails
+- **Admin Access**: Automatic privileges for @newwestevents.com emails
 - **Deployment**: Vercel-optimized with compatibility fixes
 
 ## Quality Standards

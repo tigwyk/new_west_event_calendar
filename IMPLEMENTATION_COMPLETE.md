@@ -17,7 +17,7 @@ The Supabase database integration has been successfully implemented and is now *
 - **Hybrid data management**: Uses database when available, falls back to local state
 - **Database-first event creation** with local fallback
 - **Admin approval workflow** integrated with database
-- **Automatic admin detection** for @newwestminster.ca emails
+- **Automatic admin detection** for @newwestevents.com emails
 - **Real-time event synchronization** across users
 
 ### 🚀 Production Ready Features

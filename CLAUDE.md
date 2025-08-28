@@ -94,7 +94,7 @@ The main application (`src/app/page.tsx`) is a comprehensive event calendar with
 
 - **Event Management**: CRUD operations with approval workflow
 - **User Authentication**: OAuth login with Google, GitHub, Facebook, and Twitter
-- **Role-based Access**: Automatic admin privileges for @newwestminster.ca email addresses
+- **Role-based Access**: Automatic admin privileges for @newwestevents.com email addresses
 - **Calendar Views**: List and calendar grid displays
 - **Filtering/Search**: By category, accessibility, price, location
 - **Admin Dashboard**: Analytics, pending approvals, data integration
@@ -107,7 +107,7 @@ The main application (`src/app/page.tsx`) is a comprehensive event calendar with
 - **Bun Runtime**: Optimized for Bun with faster builds and dev server (~3x faster than Node.js)
 - **Turbopack**: Next.js 15+ stable Turbopack integration for lightning-fast builds
 - **OAuth Integration**: NextAuth.js v4 with Google, GitHub, Facebook, and Twitter providers
-- **Admin Access**: Automatic admin privileges for @newwestminster.ca email addresses
+- **Admin Access**: Automatic admin privileges for @newwestevents.com email addresses
 - **Performance**: Bundle optimization, tree shaking, and SWC minification enabled
 - **React 19**: Uses latest React features (ensure compatibility when making changes)
 - **Security**: Comprehensive input sanitization, rate limiting, and XSS protection

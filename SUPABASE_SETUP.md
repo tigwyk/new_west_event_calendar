@@ -85,7 +85,7 @@ For live updates when events/comments/RSVPs change:
 
 2. Check the browser console for any connection errors
 3. Try creating an event (should appear in pending state)
-4. If you have admin access (@newwestminster.ca email), approve the event
+4. If you have admin access (@newwestevents.com email), approve the event
 
 ## Step 8: Production Deployment
 
@@ -102,7 +102,7 @@ For production deployment:
 
 **users**
 - Stores user profiles from OAuth login
-- Automatic admin detection for @newwestminster.ca emails
+- Automatic admin detection for @newwestevents.com emails
 - Links to NextAuth.js session data
 
 **events**
@@ -137,7 +137,7 @@ For production deployment:
 ### Permission Errors
 - Verify RLS policies are properly configured
 - Check user has proper authentication state
-- Confirm admin status for @newwestminster.ca emails
+- Confirm admin status for @newwestevents.com emails
 
 ### Real-time Not Working
 - Ensure realtime is enabled for relevant tables
@@ -149,7 +149,7 @@ For production deployment:
 - **API Keys**: Never commit service role key to version control
 - **RLS Policies**: All tables have comprehensive access control
 - **Input Sanitization**: All user input is validated and sanitized
-- **Admin Access**: Automatically granted to @newwestminster.ca emails
+- **Admin Access**: Automatically granted to @newwestevents.com emails
 - **HTTPS Only**: All connections encrypted in production
 
 ## Performance Optimization

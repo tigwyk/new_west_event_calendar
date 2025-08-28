@@ -22,7 +22,7 @@ The Supabase integration has been **fully implemented and tested** but is curren
 
 ### Integration Features
 - **Custom Hook**: `useEvents` hook with state management and real-time updates
-- **Admin Workflow**: Automatic admin privileges for @newwestminster.ca emails
+- **Admin Workflow**: Automatic admin privileges for @newwestevents.com emails
 - **Input Validation**: All user input validated and sanitized
 - **Error Handling**: Comprehensive error handling and logging
 
@@ -86,7 +86,7 @@ export default function Home() {
 ### Step 4: Test Integration
 1. Start development server: `bun run dev`
 2. Create test events (should appear in pending state)
-3. Login with @newwestminster.ca email (should have admin access)
+3. Login with @newwestevents.com email (should have admin access)
 4. Approve events and test real-time updates
 
 ## Current Fallback Behavior

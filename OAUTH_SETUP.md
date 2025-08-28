@@ -119,7 +119,7 @@ openssl rand -base64 32
 
 ## 6. Admin Access
 
-Users with email addresses ending in `@newwestminster.ca` automatically receive admin privileges.
+Users with email addresses ending in `@newwestevents.com` automatically receive admin privileges.
 
 ## 7. Deployment Checklist
 
@@ -148,7 +148,7 @@ Set these in your Vercel dashboard under Project Settings → Environment Variab
 ### Testing Production
 1. Visit `https://www.newwestevents.com`
 2. Test each OAuth provider
-3. Verify admin access with @newwestminster.ca email
+3. Verify admin access with @newwestevents.com email
 4. Test event creation and management
 
 ## 8. Security Notes

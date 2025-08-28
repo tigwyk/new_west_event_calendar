@@ -38,7 +38,7 @@ export const useEvents = () => {
       id: session.user.email || 'anonymous',
       email: session.user.email || '',
       name: session.user.name || '',
-      isAdmin: session.user.email?.endsWith('@newwestminster.ca') || false
+      isAdmin: session.user.email?.endsWith('@newwestevents.com') || false
     } : null,
     [session?.user]
   )

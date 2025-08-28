@@ -31,6 +31,36 @@ const authOptions = {
   session: {
     strategy: "jwt" as const,
   },
+  callbacks: {
+    async jwt({ token, account, profile }) {
+      // Debug logging for JWT callback
+      console.log('🔐 JWT Callback:', { token, account, profile });
+      
+      // Ensure email is preserved in token
+      if (account && profile) {
+        token.email = profile.email || token.email;
+        token.name = profile.name || token.name;
+        token.image = profile.image || token.image;
+        
+        console.log('📧 JWT Email preserved:', token.email);
+      }
+      
+      return token;
+    },
+    async session({ session, token }) {
+      // Debug logging for session callback
+      console.log('🎫 Session Callback:', { session, token });
+      
+      // Ensure email is passed to session
+      if (token.email) {
+        session.user.email = token.email;
+      }
+      
+      console.log('📧 Session Email final:', session.user.email);
+      
+      return session;
+    },
+  },
   secret: process.env.NEXTAUTH_SECRET || "demo_secret_key_for_development",
 }
 

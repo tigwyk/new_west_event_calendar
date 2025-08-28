@@ -450,7 +450,7 @@ export const userService = {
             email,
             name: sanitizeInput(name),
             image,
-            is_admin: email.endsWith('@newwestminster.ca')
+            is_admin: email.endsWith('@newwestevents.com')
           }] as unknown)
           .select()
           .single()

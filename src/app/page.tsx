@@ -35,11 +35,38 @@ interface Comment {
 export default function Home() {
   // NextAuth session
   const { data: session, status } = useSession();
+  
+  // Debug logging for OAuth session
+  useEffect(() => {
+    if (session) {
+      console.log('🔍 Debug Session Data:', {
+        user: session.user,
+        email: session.user?.email,
+        name: session.user?.name,
+        image: session.user?.image,
+        emailEndsWithDomain: session.user?.email?.endsWith('@newwestevents.com'),
+        fullSession: session
+      });
+    }
+  }, [session]);
+  
   const currentUser = session?.user ? {
     ...session.user,
     id: session.user.email || 'anonymous',
-    isAdmin: session.user.email?.endsWith('@newwestminster.ca') || false
+    isAdmin: session.user.email?.endsWith('@newwestevents.com') || false
   } : null;
+  
+  // Debug logging for currentUser
+  useEffect(() => {
+    if (currentUser) {
+      console.log('👤 Debug Current User:', {
+        currentUser,
+        isAdmin: currentUser.isAdmin,
+        email: currentUser.email,
+        adminCheck: currentUser.email?.endsWith('@newwestevents.com')
+      });
+    }
+  }, [currentUser]);
   
   // Database integration with fallback to in-memory
   const {

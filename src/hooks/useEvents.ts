@@ -21,15 +21,26 @@ export const useEvents = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const currentUser = useMemo(() => 
-    session?.user ? {
+  const currentUser = useMemo(() => {
+    const user = session?.user ? {
       id: session.user.email || 'anonymous',
       email: session.user.email || '',
       name: session.user.name || '',
-      isAdmin: session.user.email?.endsWith('@newwestminster.ca') || false
-    } : null,
-    [session?.user]
-  )
+      isAdmin: session.user.email?.endsWith('@newwestevents.com') || false
+    } : null
+    
+    // Debug logging
+    if (user) {
+      console.log('🎣 useEvents currentUser:', {
+        user,
+        isAdmin: user.isAdmin,
+        email: user.email,
+        sessionUserEmail: session?.user?.email
+      })
+    }
+    
+    return user
+  }, [session?.user])
 
   // Load approved events
   const loadEvents = useCallback(async () => {
