@@ -92,7 +92,7 @@ export const eventService = {
         .order('date', { ascending: true })
 
       if (_error) {
-        console.error('Error fetching events:', error)
+        console.error('Error fetching events:', _error)
         return []
       }
 
@@ -179,7 +179,7 @@ export const eventService = {
         .single()
 
       if (_error) {
-        console.error('Error creating event:', error)
+        console.error('Error creating event:', _error)
         throw new Error('Failed to create event')
       }
 
@@ -210,7 +210,7 @@ export const eventService = {
         .single()
 
       if (_error) {
-        console.error('Error updating event:', error)
+        console.error('Error updating event:', _error)
         throw new Error('Failed to update event')
       }
 
@@ -232,7 +232,7 @@ export const eventService = {
         .eq('id', eventId)
 
       if (_error) {
-        console.error('Error deleting event:', error)
+        console.error('Error deleting event:', _error)
         return false
       }
 
@@ -286,7 +286,7 @@ export const commentService = {
         .single()
 
       if (_error) {
-        console.error('Error creating comment:', error)
+        console.error('Error creating comment:', _error)
         throw new Error('Failed to create comment')
       }
 
@@ -310,7 +310,7 @@ export const commentService = {
         .single()
 
       if (_error) {
-        console.error('Error updating comment:', error)
+        console.error('Error updating comment:', _error)
         throw new Error('Failed to update comment')
       }
 
@@ -331,7 +331,7 @@ export const commentService = {
         .delete()
         .eq('id', commentId)
 
-      return !error
+      return !_error
     } catch (error) {
       console.error('Database error:', error)
       return false
@@ -388,7 +388,7 @@ export const rsvpService = {
         .single()
 
       if (_error) {
-        console.error('Error updating RSVP:', error)
+        console.error('Error updating RSVP:', _error)
         throw new Error('Failed to update RSVP')
       }
 
@@ -411,8 +411,8 @@ export const rsvpService = {
         .eq('user_id', userId)
         .single()
 
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error fetching user RSVP:', error)
+      if (_error && _error.code !== 'PGRST116') {
+        console.error('Error fetching user RSVP:', _error)
         return null
       }
 
@@ -456,7 +456,7 @@ export const userService = {
           .single()
 
         if (_error) {
-          console.error('Error creating user:', error)
+          console.error('Error creating user:', _error)
           return null
         }
 
@@ -487,7 +487,7 @@ export const userService = {
         .single()
 
       if (_error) {
-        console.error('Error updating user:', error)
+        console.error('Error updating user:', _error)
         return null
       }
 
