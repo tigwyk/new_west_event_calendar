@@ -78,13 +78,9 @@ CREATE POLICY "Users can view their own profile" ON users
 CREATE POLICY "Users can update their own profile" ON users
   FOR UPDATE USING (auth.email() = email);
 
+-- Admin policy using direct email check instead of recursive query
 CREATE POLICY "Admins can view all users" ON users
-  FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM users 
-      WHERE email = auth.email() AND is_admin = TRUE
-    )
-  );
+  FOR SELECT USING (auth.email() LIKE '%@newwestevents.com');
 
 -- Events table policies
 ALTER TABLE events ENABLE ROW LEVEL SECURITY;
@@ -100,12 +96,7 @@ CREATE POLICY "Users can view their own submitted events" ON events
   );
 
 CREATE POLICY "Admins can view all events" ON events
-  FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM users 
-      WHERE email = auth.email() AND is_admin = TRUE
-    )
-  );
+  FOR SELECT USING (auth.email() LIKE '%@newwestevents.com');
 
 CREATE POLICY "Authenticated users can create events" ON events
   FOR INSERT WITH CHECK (
@@ -123,20 +114,10 @@ CREATE POLICY "Users can update their own events" ON events
   );
 
 CREATE POLICY "Admins can update any event" ON events
-  FOR UPDATE USING (
-    EXISTS (
-      SELECT 1 FROM users 
-      WHERE email = auth.email() AND is_admin = TRUE
-    )
-  );
+  FOR UPDATE USING (auth.email() LIKE '%@newwestevents.com');
 
 CREATE POLICY "Admins can delete events" ON events
-  FOR DELETE USING (
-    EXISTS (
-      SELECT 1 FROM users 
-      WHERE email = auth.email() AND is_admin = TRUE
-    )
-  );
+  FOR DELETE USING (auth.email() LIKE '%@newwestevents.com');
 
 -- Comments table policies
 ALTER TABLE comments ENABLE ROW LEVEL SECURITY;
@@ -171,12 +152,7 @@ CREATE POLICY "Users can delete their own comments" ON comments
   );
 
 CREATE POLICY "Admins can moderate comments" ON comments
-  FOR ALL USING (
-    EXISTS (
-      SELECT 1 FROM users 
-      WHERE email = auth.email() AND is_admin = TRUE
-    )
-  );
+  FOR ALL USING (auth.email() LIKE '%@newwestevents.com');
 
 -- RSVPs table policies
 ALTER TABLE rsvps ENABLE ROW LEVEL SECURITY;
@@ -197,12 +173,7 @@ CREATE POLICY "Authenticated users can manage their RSVPs" ON rsvps
   );
 
 CREATE POLICY "Admins can view all RSVPs" ON rsvps
-  FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM users 
-      WHERE email = auth.email() AND is_admin = TRUE
-    )
-  );
+  FOR SELECT USING (auth.email() LIKE '%@newwestevents.com');
 
 -- Functions for automatic user creation on first login
 CREATE OR REPLACE FUNCTION handle_new_user()
