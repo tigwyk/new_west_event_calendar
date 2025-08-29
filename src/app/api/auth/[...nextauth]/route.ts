@@ -3,6 +3,8 @@ import GoogleProvider from "next-auth/providers/google"
 import GitHubProvider from "next-auth/providers/github"
 import FacebookProvider from "next-auth/providers/facebook"
 import TwitterProvider from "next-auth/providers/twitter"
+import type { JWT } from "next-auth/jwt"
+import type { Session } from "next-auth"
 
 const authOptions = {
   providers: [
@@ -32,31 +34,31 @@ const authOptions = {
     strategy: "jwt" as const,
   },
   callbacks: {
-    async jwt({ token, account, profile }: any) {
+    async jwt({ token, account, profile }: { token: JWT; account?: unknown; profile?: unknown }) {
       // Debug logging for JWT callback
       console.log('🔐 JWT Callback:', { token, account, profile });
       
       // Ensure email is preserved in token
-      if (account && profile) {
-        token.email = profile.email || token.email;
-        token.name = profile.name || token.name;
-        token.image = profile.image || token.image;
+      if (account && profile && typeof profile === 'object' && profile !== null && 'email' in profile) {
+        token.email = (profile.email as string) || token.email;
+        if ('name' in profile) token.name = (profile.name as string) || token.name;
+        if ('image' in profile) token.image = (profile.image as string) || token.image;
         
         console.log('📧 JWT Email preserved:', token.email);
       }
       
       return token;
     },
-    async session({ session, token }: any) {
+    async session({ session, token }: { session: Session; token: JWT }) {
       // Debug logging for session callback
       console.log('🎫 Session Callback:', { session, token });
       
       // Ensure email is passed to session
-      if (token.email) {
+      if (token.email && session.user) {
         session.user.email = token.email;
       }
       
-      console.log('📧 Session Email final:', session.user.email);
+      console.log('📧 Session Email final:', session.user?.email);
       
       return session;
     },
