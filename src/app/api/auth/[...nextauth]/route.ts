@@ -32,7 +32,7 @@ const authOptions = {
     strategy: "jwt" as const,
   },
   callbacks: {
-    async jwt({ token, account, profile }) {
+    async jwt({ token, account, profile }: any) {
       // Debug logging for JWT callback
       console.log('🔐 JWT Callback:', { token, account, profile });
       
@@ -47,7 +47,7 @@ const authOptions = {
       
       return token;
     },
-    async session({ session, token }) {
+    async session({ session, token }: any) {
       // Debug logging for session callback
       console.log('🎫 Session Callback:', { session, token });
       
