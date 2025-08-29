@@ -32,32 +32,38 @@ const authOptions = {
     strategy: "jwt" as const,
   },
   callbacks: {
-    async jwt({ token, account, profile }) {
+    async jwt({ token, account, profile }: {
+      token: Record<string, unknown>;
+      account?: Record<string, unknown> | null;
+      profile?: Record<string, unknown> | null;
+    }) {
       // Debug logging for JWT callback
       console.log('🔐 JWT Callback:', { token, account, profile });
       
       // Ensure email is preserved in token
       if (account && profile && typeof profile === 'object' && profile !== null && 'email' in profile) {
-        (token as Record<string, unknown>).email = (profile.email as string) || (token as Record<string, unknown>).email;
-        if ('name' in profile) (token as Record<string, unknown>).name = (profile.name as string) || (token as Record<string, unknown>).name;
-        if ('image' in profile) (token as Record<string, unknown>).image = (profile.image as string) || (token as Record<string, unknown>).image;
+        token.email = (profile.email as string) || token.email;
+        if ('name' in profile) token.name = (profile.name as string) || token.name;
+        if ('image' in profile) token.image = (profile.image as string) || token.image;
         
-        console.log('📧 JWT Email preserved:', (token as Record<string, unknown>).email);
+        console.log('📧 JWT Email preserved:', token.email);
       }
       
       return token;
     },
-    async session({ session, token }) {
+    async session({ session, token }: {
+      session: Record<string, unknown>;
+      token: Record<string, unknown>;
+    }) {
       // Debug logging for session callback
       console.log('🎫 Session Callback:', { session, token });
       
       // Ensure email is passed to session
-      const tokenEmail = (token as Record<string, unknown>).email;
-      if (tokenEmail && session.user) {
-        session.user.email = tokenEmail as string;
+      if (token.email && session.user && typeof session.user === 'object' && session.user !== null) {
+        (session.user as Record<string, unknown>).email = token.email as string;
       }
       
-      console.log('📧 Session Email final:', session.user?.email);
+      console.log('📧 Session Email final:', (session.user as Record<string, unknown>)?.email);
       
       return session;
     },
