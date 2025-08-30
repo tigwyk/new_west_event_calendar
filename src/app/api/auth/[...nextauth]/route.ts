@@ -1,10 +1,11 @@
 import NextAuth from "next-auth/next"
+import type { AuthOptions } from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
 import GitHubProvider from "next-auth/providers/github"
 import FacebookProvider from "next-auth/providers/facebook"
 import TwitterProvider from "next-auth/providers/twitter"
 
-const authOptions = {
+const authOptions: AuthOptions = {
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || "demo_google_client_id",
@@ -32,11 +33,7 @@ const authOptions = {
     strategy: "jwt" as const,
   },
   callbacks: {
-    async jwt({ token, account, profile }: {
-      token: Record<string, unknown>;
-      account?: Record<string, unknown> | null;
-      profile?: Record<string, unknown> | null;
-    }) {
+    jwt: async ({ token, account, profile }) => {
       // Debug logging for JWT callback
       console.log('🔐 JWT Callback:', { token, account, profile });
       
@@ -51,19 +48,16 @@ const authOptions = {
       
       return token;
     },
-    async session({ session, token }: {
-      session: Record<string, unknown>;
-      token: Record<string, unknown>;
-    }) {
+    session: async ({ session, token }) => {
       // Debug logging for session callback
       console.log('🎫 Session Callback:', { session, token });
       
       // Ensure email is passed to session
-      if (token.email && session.user && typeof session.user === 'object' && session.user !== null) {
-        (session.user as Record<string, unknown>).email = token.email as string;
+      if (token.email && session.user) {
+        session.user.email = token.email as string;
       }
       
-      console.log('📧 Session Email final:', (session.user as Record<string, unknown>)?.email);
+      console.log('📧 Session Email final:', session.user.email);
       
       return session;
     },
