@@ -4,6 +4,12 @@ import React from "react";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { validateEventData, sanitizeInput, RateLimiter } from "../utils/security";
 import { useEvents } from "../hooks/useEvents";
+import { useEventNotifications, useEventReminders, requestNotificationPermission } from "../lib/notifications";
+import ToastNotifications from "../components/ToastNotifications";
+import RealTimeComments from "../components/RealTimeComments";
+import RealTimeRSVP from "../components/RealTimeRSVP";
+import EventImageUpload from "../components/EventImageUpload";
+import ModerationDashboard from "../components/ModerationDashboard";
 
 interface Event {
   id: string;
@@ -56,7 +62,7 @@ export default function Home() {
     isAdmin: session.user.email?.endsWith('@newwestevents.com') || false
   } : null;
   
-  // Debug logging for currentUser
+  // Debug logging for currentUser and notification permission
   useEffect(() => {
     if (currentUser) {
       console.log('👤 Debug Current User:', {
@@ -65,6 +71,16 @@ export default function Home() {
         email: currentUser.email,
         adminCheck: currentUser.email?.endsWith('@newwestevents.com')
       });
+      
+      // Request notification permission for logged-in users
+      const requestPermissions = async () => {
+        const hasPermission = await requestNotificationPermission();
+        if (hasPermission) {
+          console.log('🔔 Notification permission granted');
+        }
+      };
+      
+      requestPermissions();
     }
   }, [currentUser]);
   
@@ -73,7 +89,9 @@ export default function Home() {
     events: dbEvents,
     pendingEvents: dbPendingEvents,
     createEvent: dbCreateEvent,
-    updateEventStatus: dbUpdateEventStatus
+    updateEventStatus: dbUpdateEventStatus,
+    updateRSVP,
+    addComment: dbAddComment
   } = useEvents();
 
   // Rate limiter for form submissions
@@ -119,7 +137,7 @@ export default function Home() {
   const [showAdd, setShowAdd] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
   const [form, setForm] = useState({
-    title: '', date: '', time: '', location: '', description: '', link: '', category: '', isFree: false, isAccessible: false
+    title: '', date: '', time: '', location: '', description: '', link: '', category: '', isFree: false, isAccessible: false, imageUrls: [] as string[]
   });
   const [editingId, setEditingId] = useState<string|null>(null);
   const [editForm, setEditForm] = useState({
@@ -140,12 +158,22 @@ export default function Home() {
   // Loading states
   const [isSubmitting, setIsSubmitting] = useState(false);
   
+  // Notification system
+  const { handleEventChange, handleCommentChange, handleRSVPChange } = useEventNotifications(
+    currentUser?.id,
+    currentUser?.isAdmin
+  );
+  
+  // Event reminders
+  useEventReminders(events, currentUser?.id);
+  
   // Comment state
   const [showComments, setShowComments] = useState<string | null>(null);
   const [commentText, setCommentText] = useState('');
   
   // Admin dashboard state
   const [showAdminDashboard, setShowAdminDashboard] = useState(false);
+  const [showModerationDashboard, setShowModerationDashboard] = useState(false);
   const [analytics, setAnalytics] = useState({
     totalEvents: 0,
     totalRSVPs: 0,
@@ -350,49 +378,80 @@ export default function Home() {
     signOut();
   }
 
-  // RSVP functions
-  function toggleRSVP(eventId: string) {
+  // Enhanced RSVP functions using database
+  const toggleRSVP = useCallback(async (eventId: string) => {
     if (!currentUser) return;
-    setEvents(events.map(event => {
-      if (event.id === eventId) {
-        const rsvps = event.rsvps || [];
-        const hasRSVP = rsvps.includes(currentUser.id);
-        return {
-          ...event,
-          rsvps: hasRSVP 
-            ? rsvps.filter(id => id !== currentUser.id)
-            : [...rsvps, currentUser.id]
-        };
+    
+    try {
+      // Get current RSVP status
+      const currentEvent = events.find(e => e.id === eventId);
+      const hasRSVP = currentEvent?.rsvps?.includes(currentUser.id);
+      
+      // Try database update first
+      if (dbEvents.length > 0 && updateRSVP) {
+        const newStatus = hasRSVP ? 'not_attending' : 'attending';
+        await updateRSVP(eventId, newStatus);
+        return; // Database update handles state
       }
-      return event;
-    }));
-  }
+      
+      // Fallback to local state
+      setEvents(events.map(event => {
+        if (event.id === eventId) {
+          const rsvps = event.rsvps || [];
+          const hasRSVP = rsvps.includes(currentUser.id);
+          return {
+            ...event,
+            rsvps: hasRSVP 
+              ? rsvps.filter(id => id !== currentUser.id)
+              : [...rsvps, currentUser.id]
+          };
+        }
+        return event;
+      }));
+    } catch (error) {
+      console.error('Error updating RSVP:', error);
+      alert('Failed to update RSVP. Please try again.');
+    }
+  }, [currentUser, events, dbEvents.length, updateRSVP]);
 
-  // Comment functions
-  function addComment(eventId: string) {
+  // Enhanced comment functions using database
+  const addComment = useCallback(async (eventId: string) => {
     if (!currentUser || !commentText.trim()) return;
     
-    const newComment: Comment = {
-      id: Date.now().toString(),
-      eventId,
-      userId: currentUser.id,
-      userName: currentUser.name || 'Anonymous User',
-      text: commentText.trim(),
-      timestamp: new Date().toISOString()
-    };
-
-    setEvents(events.map(event => {
-      if (event.id === eventId) {
-        return {
-          ...event,
-          comments: [...(event.comments || []), newComment]
-        };
+    try {
+      // Try database create first
+      if (dbEvents.length > 0 && dbAddComment) {
+        await dbAddComment(eventId, commentText.trim());
+        setCommentText('');
+        return; // Database update handles state
       }
-      return event;
-    }));
-    
-    setCommentText('');
-  }
+      
+      // Fallback to local state
+      const newComment: Comment = {
+        id: Date.now().toString(),
+        eventId,
+        userId: currentUser.id,
+        userName: currentUser.name || 'Anonymous User',
+        text: commentText.trim(),
+        timestamp: new Date().toISOString()
+      };
+
+      setEvents(events.map(event => {
+        if (event.id === eventId) {
+          return {
+            ...event,
+            comments: [...(event.comments || []), newComment]
+          };
+        }
+        return event;
+      }));
+      
+      setCommentText('');
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      alert('Failed to add comment. Please try again.');
+    }
+  }, [currentUser, commentText, dbEvents.length, dbAddComment, events]);
 
   // Admin functions
   async function approveEvent(eventId: string) {
@@ -611,6 +670,12 @@ export default function Home() {
                     >
                       Dashboard
                     </button>
+                    <button
+                      className="px-3 py-1 rounded bg-orange-500 text-white text-sm hover:bg-orange-600"
+                      onClick={() => setShowModerationDashboard(true)}
+                    >
+                      🛡️ Moderation
+                    </button>
                   </>
                 )}
                 <button
@@ -781,6 +846,20 @@ export default function Home() {
                   Wheelchair Accessible
                 </label>
               </div>
+              
+              {/* Event Images Upload */}
+              <div className="mt-4">
+                <label className="block text-sm font-medium mb-2">Event Images (Optional)</label>
+                <EventImageUpload
+                  eventId="temp-event" // Temporary ID - will be replaced with actual ID after creation
+                  maxImages={3}
+                  allowMultiple={true}
+                  onImagesChange={(images) => {
+                    // Store image URLs in form state for now
+                    setForm(prev => ({ ...prev, imageUrls: images }))
+                  }}
+                />
+              </div>
             </div>
             <div className="flex gap-2 mt-2">
               <button 
@@ -867,8 +946,26 @@ export default function Home() {
                     </form>
                   ) : (
                     <>
-                      <div>
-                        <span className="block font-medium">{event.title}</span>
+                      <div className="flex gap-4">
+                        {/* Event Image */}
+                        {(() => {
+                          const dbEvent = dbEvents.find(dbE => dbE.id === event.id);
+                          const imageUrl = dbEvent?.image_url || (dbEvent?.image_urls && dbEvent.image_urls.length > 0 ? dbEvent.image_urls[0] : null);
+                          
+                          return imageUrl && (
+                            <div className="flex-shrink-0">
+                              <img
+                                src={imageUrl}
+                                alt={event.title}
+                                className="w-16 h-16 object-cover rounded-lg border"
+                                loading="lazy"
+                              />
+                            </div>
+                          );
+                        })()}
+                        
+                        <div className="flex-1">
+                          <span className="block font-medium">{event.title}</span>
                         <span className="block text-xs text-gray-500">
                           {event.date} @ {event.time}, {event.location}
                           {event.category && <span className="ml-2 px-1 bg-gray-200 dark:bg-gray-700 rounded text-xs">{event.category}</span>}
@@ -893,63 +990,88 @@ export default function Home() {
                         <div className="flex gap-2 mt-1">
                           {event.isFree && <span className="text-xs bg-green-100 dark:bg-green-800 px-2 py-0.5 rounded">Free</span>}
                           {event.isAccessible && <span className="text-xs bg-purple-100 dark:bg-purple-800 px-2 py-0.5 rounded">♿ Accessible</span>}
-                          {event.rsvps && event.rsvps.length > 0 && (
-                            <span className="text-xs bg-blue-100 dark:bg-blue-800 px-2 py-0.5 rounded">
-                              {event.rsvps.length} RSVP{event.rsvps.length !== 1 ? 's' : ''}
-                            </span>
+                          {/* Enhanced RSVP display with database counts */}
+                          {(() => {
+                            const dbEvent = dbEvents.find(dbE => dbE.id === event.id);
+                            const rsvpCounts = dbEvent?.rsvp_counts;
+                            const totalRSVPs = rsvpCounts 
+                              ? rsvpCounts.attending + rsvpCounts.maybe 
+                              : (event.rsvps?.length || 0);
+                            
+                            return totalRSVPs > 0 && (
+                              <span className="text-xs bg-blue-100 dark:bg-blue-800 px-2 py-0.5 rounded">
+                                {rsvpCounts ? (
+                                  <>
+                                    {rsvpCounts.attending} attending
+                                    {rsvpCounts.maybe > 0 && `, ${rsvpCounts.maybe} maybe`}
+                                  </>
+                                ) : (
+                                  `${totalRSVPs} RSVP${totalRSVPs !== 1 ? 's' : ''}`
+                                )}
+                              </span>
+                            );
+                          })()}
+                        </div>
+                        {/* Enhanced RSVP and Comments section */}
+                        <div className="mt-4 space-y-3">
+                          {/* Real-time RSVP Component */}
+                          <RealTimeRSVP
+                            eventId={event.id}
+                            currentUser={currentUser ? {
+                              id: currentUser.id,
+                              email: currentUser.email || '',
+                              name: currentUser.name || 'Anonymous User'
+                            } : null}
+                            initialCounts={(() => {
+                              const dbEvent = dbEvents.find(dbE => dbE.id === event.id);
+                              return dbEvent?.rsvp_counts || { attending: 0, not_attending: 0, maybe: 0 };
+                            })()}
+                            initialUserRSVP={(() => {
+                              const dbEvent = dbEvents.find(dbE => dbE.id === event.id);
+                              return dbEvent?.user_rsvp || null;
+                            })()}
+                          />
+                          
+                          {/* Comments Toggle */}
+                          {currentUser && (
+                            <div className="flex justify-center">
+                              <button
+                                className="text-sm px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-full transition-colors flex items-center gap-2"
+                                onClick={() => setShowComments(showComments === event.id ? null : event.id)}
+                              >
+                                💬 Comments ({event.comments?.length || 0})
+                                {showComments === event.id ? (
+                                  <svg className="w-4 h-4 transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                  </svg>
+                                ) : (
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                  </svg>
+                                )}
+                              </button>
+                            </div>
                           )}
                         </div>
-                        {currentUser && (
-                          <div className="flex gap-2 mt-2">
-                            <button
-                              className={`text-xs px-2 py-1 rounded ${
-                                event.rsvps?.includes(currentUser.id)
-                                  ? 'bg-blue-500 text-white'
-                                  : 'bg-gray-200 dark:bg-gray-700'
-                              }`}
-                              onClick={() => toggleRSVP(event.id)}
-                            >
-                              {event.rsvps?.includes(currentUser.id) ? 'Cancel RSVP' : 'RSVP'}
-                            </button>
-                            <button
-                              className="text-xs px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded"
-                              onClick={() => setShowComments(showComments === event.id ? null : event.id)}
-                            >
-                              Comments ({event.comments?.length || 0})
-                            </button>
-                          </div>
-                        )}
                         {showComments === event.id && (
-                          <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-800 rounded">
-                            <div className="space-y-2 mb-3">
-                              {event.comments?.map(comment => (
-                                <div key={comment.id} className="text-sm">
-                                  <span className="font-medium">{comment.userName}:</span>
-                                  <span className="ml-2">{comment.text}</span>
-                                  <span className="ml-2 text-xs text-gray-500">
-                                    {new Date(comment.timestamp).toLocaleDateString()}
-                                  </span>
-                                </div>
-                              ))}
-                            </div>
-                            {currentUser && (
-                              <div className="flex gap-2">
-                                <input
-                                  type="text"
-                                  placeholder="Add a comment..."
-                                  className="flex-1 border rounded px-2 py-1 text-sm"
-                                  value={commentText}
-                                  onChange={(e) => setCommentText(e.target.value)}
-                                  onKeyDown={(e) => e.key === 'Enter' && addComment(event.id)}
-                                />
-                                <button
-                                  className="text-xs px-2 py-1 bg-blue-500 text-white rounded"
-                                  onClick={() => addComment(event.id)}
-                                >
-                                  Post
-                                </button>
-                              </div>
-                            )}
+                          <div className="mt-3">
+                            <RealTimeComments
+                              eventId={event.id}
+                              currentUser={currentUser ? {
+                                id: currentUser.id,
+                                name: currentUser.name || 'Anonymous User',
+                                isAdmin: currentUser.isAdmin
+                              } : null}
+                              initialComments={event.comments?.map(comment => ({
+                                id: comment.id,
+                                event_id: comment.eventId,
+                                user_id: comment.userId,
+                                user_name: comment.userName,
+                                text: comment.text,
+                                created_at: comment.timestamp,
+                                updated_at: comment.timestamp
+                              }))}
+                            />
                           </div>
                         )}
                       </div>
@@ -1198,6 +1320,21 @@ export default function Home() {
           </div>
         )}
         
+        {/* Moderation Dashboard */}
+        <ModerationDashboard
+          isVisible={showModerationDashboard}
+          onClose={() => setShowModerationDashboard(false)}
+          currentUser={currentUser}
+          pendingEvents={pendingEvents.map(event => ({
+            id: event.id,
+            title: event.title,
+            description: event.description,
+            location: event.location,
+            submittedBy: event.submittedBy,
+            created_at: event.created_at || new Date().toISOString()
+          }))}
+        />
+        
         {/* OAuth Login Modal */}
         {showLogin && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -1267,6 +1404,9 @@ export default function Home() {
         )}
       </main>
       <footer className="mt-4 text-center text-xs text-gray-400 pb-2">New West Event Calendar &copy; 2025</footer>
+      
+      {/* Toast Notifications */}
+      <ToastNotifications />
     </div>
   );
 }

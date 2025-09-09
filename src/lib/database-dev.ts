@@ -12,6 +12,9 @@ export interface EventRow {
   category: string | null
   is_free: boolean
   is_accessible: boolean
+  image_url: string | null
+  image_urls: string[] | null
+  max_capacity: number | null
   submitted_by: string | null
   status: 'approved' | 'pending' | 'rejected'
   created_at: string
@@ -518,7 +521,10 @@ export const subscriptions = {
         .channel('events_changes')
         .on('postgres_changes', 
           { event: '*', schema: 'public', table: 'events' },
-          callback
+          (payload) => {
+            console.log('Real-time event change:', payload)
+            callback(payload)
+          }
         )
         .subscribe()
     }).catch(error => {

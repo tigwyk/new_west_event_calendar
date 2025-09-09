@@ -232,7 +232,7 @@ export const useEvents = () => {
     return newComment
   }, [currentUser])
 
-  // Set up real-time subscriptions
+  // Set up real-time subscriptions with notification callbacks
   useEffect(() => {
     // Subscribe to event changes
     const eventSubscription = subscriptions.subscribeToEvents((payload) => {
